@@ -75,7 +75,7 @@ const Login = () => {
 
         {/* RIGHT SIDE – CONTENT */}
         <div className={styles.loginLeft}>
-          <h1>Welcome back 👋</h1>
+          <h1>Welcome back</h1>
           <p className={styles.subtitle}>
             Login to continue managing your work
           </p>

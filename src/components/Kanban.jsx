@@ -42,13 +42,12 @@ const Kanban = ({ projectId, projectName }) => {
 
   if (loading) return null;
 
-  /* RESET ON PROJECT CHANGE */
+      // refresh
   useEffect(() => {
     dispatch(setColumns([]));
     loaded.current = false;
   }, [projectId, dispatch]);
 
-  /* INIT BOARD */
   useEffect(() => {
     if (!projectId) return;
 
@@ -64,7 +63,8 @@ const Kanban = ({ projectId, projectName }) => {
     init();
   }, [projectId]);
 
-  /* REALTIME LOAD */
+  // load 
+
   useEffect(() => {
     if (!projectId) return;
 
@@ -74,7 +74,6 @@ const Kanban = ({ projectId, projectName }) => {
       if (snap.exists()) {
         const cols = snap.data().columns || [];
 
-        // 🔢 find max issue number
         let max = 0;
         cols.forEach((col) =>
           col.items.forEach((item) => {
@@ -93,15 +92,7 @@ const Kanban = ({ projectId, projectName }) => {
     return () => unsub();
   }, [projectId, dispatch]);
 
-  /* 🚫 REMOVED CONFLICTING useEffect - causing the overwrite bug!
-  useEffect(() => {
-    if (!loaded.current || !projectId) return;
-    const ref = doc(db, "projects", projectId, "kanban", "board");
-    setDoc(ref, { columns }, { merge: true });
-  }, [columns, projectId]);
-  */
 
-  /* ADD CARD */
   const addCard = async (columnId, content) => {
     const nextNumber = issueCounter + 1;
 
@@ -111,6 +102,7 @@ const Kanban = ({ projectId, projectName }) => {
       content,
       projectId,
       columnId,
+      columnTitle: columns.find((c) => c.id === columnId)?.title || "",
       summary: "",
       description: "",
       createdBy: user.uid,
@@ -141,10 +133,8 @@ const Kanban = ({ projectId, projectName }) => {
         : col,
     );
 
-    // 1. Update Redux first (optimistic)
     dispatch(setColumns(updated));
-    
-    // 2. Update Firestore
+
     await updateDoc(doc(db, "projects", projectId, "kanban", "board"), {
       columns: updated,
     });
@@ -152,7 +142,6 @@ const Kanban = ({ projectId, projectName }) => {
     setIssueCounter(nextNumber);
   };
 
-  /* LOG MOVE ACTIVITY */
   const logMoveActivity = async (issueId, from, to) => {
     if (!user) return;
 
@@ -166,7 +155,6 @@ const Kanban = ({ projectId, projectName }) => {
     });
   };
 
-  /* MOVE CARD */
   const moveCard = async (fromCol, toCol, card, fromIndex, toIndex) => {
     const updated = structuredClone(columns);
 
@@ -174,74 +162,65 @@ const Kanban = ({ projectId, projectName }) => {
     const target = updated.find((c) => c.id === toCol);
     if (!source || !target) return;
 
-    // REMOVE
     source.items.splice(fromIndex, 1);
 
-    // ADD
     target.items.splice(toIndex, 0, {
       ...card,
       columnId: target.id,
       columnTitle: target.title,
     });
-
-    // 1. Update Redux first (optimistic)
+    
     dispatch(setColumns(updated));
 
-    // 2. Update Firestore
     await updateDoc(doc(db, "projects", projectId, "kanban", "board"), {
       columns: updated,
     });
 
-    // ✅ LOG ACTIVITY (ON REAL MOVE)
-    if (source.title !== target.title) {
+    if (source.id !== target.id) {
+      await updateDoc(doc(db, "tickets", card.id), {
+        columnId: target.id,
+        columnTitle: target.title,
+        updatedAt: new Date().toISOString(),
+      });
+
       logMoveActivity(card.id, source.title, target.title);
     }
   };
 
-  /* MOVE COLUMN */
   const moveColumn = async (fromIndex, toIndex) => {
     const updated = [...columns];
     const [moved] = updated.splice(fromIndex, 1);
     updated.splice(toIndex, 0, moved);
-    
-    // 1. Update Redux first (optimistic)
+
     dispatch(setColumns(updated));
-    
-    // 2. Update Firestore
+
     await updateDoc(doc(db, "projects", projectId, "kanban", "board"), {
       columns: updated,
     });
   };
 
-  /* RENAME COLUMN */
   const renameColumn = async (columnId, newTitle) => {
     const updated = columns.map((col) =>
       col.id === columnId ? { ...col, title: newTitle } : col,
     );
-    
-    // 1. Update Redux first (optimistic)
+
     dispatch(setColumns(updated));
-    
-    // 2. Update Firestore
+
     await updateDoc(doc(db, "projects", projectId, "kanban", "board"), {
       columns: updated,
     });
   };
 
-  /* DELETE COLUMN */
   const deleteColumn = async (columnId) => {
     const updated = columns.filter((col) => col.id !== columnId);
-    
-    // 1. Update Redux first (optimistic)
+
     dispatch(setColumns(updated));
-    
-    // 2. Update Firestore
+
     await updateDoc(doc(db, "projects", projectId, "kanban", "board"), {
       columns: updated,
     });
   };
 
-  /* UPDATE / MOVE / DELETE ISSUE */
   const updateIssue = async (updatedItem) => {
     const updated = structuredClone(columns);
 
@@ -258,18 +237,29 @@ const Kanban = ({ projectId, projectName }) => {
 
     if (!sourceCol) return;
 
-    const card = sourceCol.items[index];
-
-    // 🔁 CASE 1: STATUS CHANGE (MOVE CARD)
-    if (
-      updatedItem.columnId &&
-      updatedItem.columnId !== card.columnId
-    ) {
+    if (updatedItem._action === "delete") {
       sourceCol.items.splice(index, 1);
 
-      const target = updated.find(
-        (c) => c.id === updatedItem.columnId
-      );
+      dispatch(setColumns(updated));
+
+      await updateDoc(doc(db, "projects", projectId, "kanban", "board"), {
+        columns: updated,
+      });
+
+      await updateDoc(doc(db, "tickets", updatedItem.id), {
+        deleted: true,
+        deletedAt: new Date().toISOString(),
+      });
+
+      return;
+    }
+
+    const card = sourceCol.items[index];
+
+    if (updatedItem.columnId && updatedItem.columnId !== card.columnId) {
+      sourceCol.items.splice(index, 1);
+
+      const target = updated.find((c) => c.id === updatedItem.columnId);
       if (!target) return;
 
       target.items.push({
@@ -277,28 +267,47 @@ const Kanban = ({ projectId, projectName }) => {
         ...updatedItem,
         columnTitle: target.title,
       });
-    } 
-    // ✏️ CASE 2: CONTENT UPDATE (EDIT IN PLACE)
+
+      dispatch(setColumns(updated));
+
+      await updateDoc(doc(db, "projects", projectId, "kanban", "board"), {
+        columns: updated,
+      });
+
+      // 3. Update ticket document (SOURCE OF TRUTH)
+      await updateDoc(doc(db, "tickets", updatedItem.id), {
+        columnId: updatedItem.columnId,
+        columnTitle: target.title,
+        updatedAt: new Date().toISOString(),
+      });
+
+      await addDoc(collection(db, "tickets", updatedItem.id, "activity"), {
+        type: "move",
+        from: sourceCol.title,
+        to: target.title,
+        userId: user.uid,
+        userName: user.displayName || user.email,
+        createdAt: serverTimestamp(),
+      });
+    }
+
     else {
       sourceCol.items[index] = {
         ...card,
         ...updatedItem,
       };
+
+      dispatch(setColumns(updated));
+
+      await updateDoc(doc(db, "projects", projectId, "kanban", "board"), {
+        columns: updated,
+      });
+
+      await updateDoc(doc(db, "tickets", updatedItem.id), {
+        ...updatedItem,
+        updatedAt: new Date().toISOString(),
+      });
     }
-
-    // 1️⃣ FIRST: Update Redux (optimistic - immediate UI update)
-    dispatch(setColumns(updated));
-
-    // 2️⃣ THEN: Update Firestore in background
-    await updateDoc(
-      doc(db, "projects", projectId, "kanban", "board"),
-      { columns: updated }
-    );
-
-    await updateDoc(doc(db, "tickets", updatedItem.id), {
-      ...updatedItem,
-      updatedAt: new Date().toISOString(),
-    });
   };
 
   const filteredColumns = columns.map((col) => {
@@ -321,7 +330,7 @@ const Kanban = ({ projectId, projectName }) => {
 
   return (
     <>
-      {/* SEARCH BAR */}
+    
       <div className="kanban-search">
         <input
           type="text"
@@ -340,6 +349,7 @@ const Kanban = ({ projectId, projectName }) => {
             moveColumn={moveColumn}
             addCard={addCard}
             projectName={projectName}
+            projectId={projectId}
             columns={columns}
             updateIssue={updateIssue}
             renameColumn={renameColumn}
@@ -359,7 +369,7 @@ const Kanban = ({ projectId, projectName }) => {
               <button
                 onClick={async () => {
                   if (!columnTitle.trim()) return;
-                  
+
                   const updated = [
                     ...columns,
                     {
@@ -368,15 +378,18 @@ const Kanban = ({ projectId, projectName }) => {
                       items: [],
                     },
                   ];
-                  
+
                   // 1. Update Redux first
                   dispatch(setColumns(updated));
-                  
+
                   // 2. Update Firestore
-                  await updateDoc(doc(db, "projects", projectId, "kanban", "board"), {
-                    columns: updated,
-                  });
-                  
+                  await updateDoc(
+                    doc(db, "projects", projectId, "kanban", "board"),
+                    {
+                      columns: updated,
+                    },
+                  );
+
                   setColumnTitle("");
                   setShowColumnInput(false);
                 }}

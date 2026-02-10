@@ -61,7 +61,7 @@ const Register = () => {
       <div className={styles.registerContainer}>
         {/* LEFT – CONTENT */}
         <div className={styles.registerLeft}>
-          <h1>Create account ✨</h1>
+          <h1>Create account</h1>
           <p className={styles.subtitle}>
             Register to start managing your projects
           </p>

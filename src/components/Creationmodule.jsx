@@ -251,7 +251,7 @@ const Creationmodule = () => {
             <input
               type="date"
               value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
+              onChange={(e) => setDueDate(e.target.value)}
             />
           </div>
 

@@ -10,8 +10,10 @@ import IssueAllActivity from "./IssueAllActivity";
 import { FiMaximize2, FiMinimize2 } from "react-icons/fi";
 import { MdOutlineArrowOutward } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
+import { doc, updateDoc, onSnapshot } from "firebase/firestore";
+import { db } from "../firebase/firebase";
 
-const IssueModal = ({ item, projectName, columns, onClose, onUpdate }) => {
+const IssueModal = ({ item, projectName, projectId, columns, onClose, onUpdate }) => {
   if (!item) return null;
 
   const summaryRef = useRef(null);
@@ -26,6 +28,7 @@ const IssueModal = ({ item, projectName, columns, onClose, onUpdate }) => {
 
   const [summaryHTML, setSummaryHTML] = useState("");
   const [descriptionHTML, setDescriptionHTML] = useState("");
+  const [currentTicket, setCurrentTicket] = useState(item);
 
   const [activeActivityTab, setActiveActivityTab] = useState("Comments");
   const [activityOpen, setActivityOpen] = useState(true);
@@ -33,21 +36,45 @@ const IssueModal = ({ item, projectName, columns, onClose, onUpdate }) => {
 
   const navigate = useNavigate();
 
-  /* 🔄 Sync when issue changes */
+  /* 🔄 REALTIME SYNC - Listen to ticket document changes */
   useEffect(() => {
-    setSummaryHTML(item.summary || "");
-    setDescriptionHTML(item.description || "");
+    if (!item?.id) return;
+
+    const ticketRef = doc(db, "tickets", item.id);
+    const unsubscribe = onSnapshot(ticketRef, (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        const updatedTicket = { id: item.id, ...data };
+        
+        setCurrentTicket(updatedTicket);
+        setSummaryHTML(data.summary || "");
+        setDescriptionHTML(data.description || "");
+      }
+    });
+
+    return () => unsubscribe();
+  }, [item.id]);
+
+  /* 🔄 Reset editors when issue changes */
+  useEffect(() => {
     setEditSummary(false);
     setEditDescription(false);
-
     summaryQuill.current = null;
     descriptionQuill.current = null;
   }, [item.id]);
 
-  /* 🔐 Update through parent */
+  /* 🔐 Update through parent AND Firebase */
   const updateIssue = async (data) => {
+    // 1️⃣ Update ticket document (SOURCE OF TRUTH)
+    await updateDoc(doc(db, "tickets", item.id), {
+      ...data,
+      updatedAt: new Date().toISOString(),
+    });
+
+    // 2️⃣ Update board (Redux + board doc) through parent
     await onUpdate({ id: item.id, ...data });
 
+    // 3️⃣ Update local UI
     if (data.summary !== undefined) setSummaryHTML(data.summary);
     if (data.description !== undefined) setDescriptionHTML(data.description);
   };
@@ -61,21 +88,17 @@ const IssueModal = ({ item, projectName, columns, onClose, onUpdate }) => {
       });
       summaryQuill.current.root.innerHTML = summaryHTML;
     }
-  }, [editSummary]);
+  }, [editSummary, summaryHTML]);
 
   useEffect(() => {
-    if (
-      editDescription &&
-      descriptionRef.current &&
-      !descriptionQuill.current
-    ) {
+    if (editDescription && descriptionRef.current && !descriptionQuill.current) {
       descriptionQuill.current = new Quill(descriptionRef.current, {
         theme: "snow",
         placeholder: "Add a description…",
       });
       descriptionQuill.current.root.innerHTML = descriptionHTML;
     }
-  }, [editDescription]);
+  }, [editDescription, descriptionHTML]);
 
   const saveSummary = async () => {
     if (!summaryQuill.current) return;
@@ -83,7 +106,7 @@ const IssueModal = ({ item, projectName, columns, onClose, onUpdate }) => {
     const html = summaryQuill.current.getSemanticHTML();
     setEditSummary(false);
     summaryQuill.current = null;
-    setSummaryHTML(html);
+    
     await updateIssue({ summary: html });
   };
 
@@ -93,7 +116,7 @@ const IssueModal = ({ item, projectName, columns, onClose, onUpdate }) => {
     const html = descriptionQuill.current.getSemanticHTML();
     setEditDescription(false);
     descriptionQuill.current = null;
-    setDescriptionHTML(html);
+    
     await updateIssue({ description: html });
   };
 
@@ -102,13 +125,13 @@ const IssueModal = ({ item, projectName, columns, onClose, onUpdate }) => {
       <div className={`issue-container ${compact ? "compact" : ""}`}>
         {/* HEADER */}
         <div className="issue-header">
-          <h1>{item.content}</h1>
+          <h1>{currentTicket.content}</h1>
 
           <div className="issue-actions">
             <button
               className="re-direct-btn"
               onClick={() => {
-                navigate(`/projects/${item.projectId}/issues/${item.id}`);
+                navigate(`/projects/${currentTicket.projectId}/issues/${currentTicket.id}`);
                 onClose();
               }}
             >
@@ -216,13 +239,13 @@ const IssueModal = ({ item, projectName, columns, onClose, onUpdate }) => {
             {activityOpen && (
               <>
                 {activeActivityTab === "All" && (
-                  <IssueAllActivity issueId={item.id} />
+                  <IssueAllActivity issueId={currentTicket.id} />
                 )}
                 {activeActivityTab === "Comments" && (
-                  <IssueComments issueId={item.id} />
+                  <IssueComments issueId={currentTicket.id} />
                 )}
                 {activeActivityTab === "History" && (
-                  <IssueActivity issueId={item.id} />
+                  <IssueActivity issueId={currentTicket.id} />
                 )}
               </>
             )}
@@ -233,7 +256,7 @@ const IssueModal = ({ item, projectName, columns, onClose, onUpdate }) => {
             <div className="issue-meta">
               <label>Status</label>
               <select
-                value={item.columnId}
+                value={currentTicket.columnId}
                 onChange={async (e) => {
                   const col = columns.find((c) => c.id === e.target.value);
                   if (!col) return;
@@ -265,11 +288,11 @@ const IssueModal = ({ item, projectName, columns, onClose, onUpdate }) => {
                   <div className="issue-meta">
                     <label>Created by</label>
                     <div className="issue-meta-value">
-                      {item.createdByName || "Unknown"}
+                      {currentTicket.createdByName || "Unknown"}
                     </div>
                   </div>
 
-                   <div className="issue-meta">
+                  <div className="issue-meta">
                     <label>Project</label>
                     <div className="issue-meta-value">{projectName}</div>
                   </div>
@@ -277,8 +300,8 @@ const IssueModal = ({ item, projectName, columns, onClose, onUpdate }) => {
                   <div className="issue-meta">
                     <label>Created</label>
                     <div className="issue-meta-value">
-                      {item.createdAt
-                        ? new Date(item.createdAt).toLocaleDateString("en-US", {
+                      {currentTicket.createdAt
+                        ? new Date(currentTicket.createdAt).toLocaleDateString("en-US", {
                             month: "short",
                             day: "2-digit",
                             year: "numeric",
@@ -287,12 +310,12 @@ const IssueModal = ({ item, projectName, columns, onClose, onUpdate }) => {
                     </div>
                   </div>
 
-                  {/* ✅ START DATE (ADDED) */}
+                  {/* START DATE */}
                   <div className="issue-meta">
                     <label>Start date</label>
                     <div className="issue-meta-value">
-                      {item.startDate
-                        ? new Date(item.startDate).toLocaleDateString("en-US", {
+                      {currentTicket.startDate
+                        ? new Date(currentTicket.startDate).toLocaleDateString("en-US", {
                             month: "short",
                             day: "2-digit",
                             year: "numeric",
@@ -301,12 +324,12 @@ const IssueModal = ({ item, projectName, columns, onClose, onUpdate }) => {
                     </div>
                   </div>
 
-                  {/* ✅ DUE DATE (ADDED) */}
+                  {/* DUE DATE */}
                   <div className="issue-meta">
                     <label>Due date</label>
                     <div className="issue-meta-value">
-                      {item.dueDate
-                        ? new Date(item.dueDate).toLocaleDateString("en-US", {
+                      {currentTicket.dueDate
+                        ? new Date(currentTicket.dueDate).toLocaleDateString("en-US", {
                             month: "short",
                             day: "2-digit",
                             year: "numeric",
@@ -317,7 +340,9 @@ const IssueModal = ({ item, projectName, columns, onClose, onUpdate }) => {
 
                   <div className="issue-meta">
                     <label>Reporter</label>
-                    {item.createdByName || "none"}
+                    <div className="issue-meta-value">
+                      {currentTicket.createdByName || "none"}
+                    </div>
                   </div>
                 </div>
               )}

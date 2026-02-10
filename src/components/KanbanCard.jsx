@@ -72,29 +72,38 @@ const KanbanCard = ({
         }}
       >
         {editing ? (
-          <input
-            value={text}
-            autoFocus
-            onBlur={() => {
-              renameCard(sourceCol, item.id, text);
-              setEditing(false);
-            }}
-            onChange={(e) => setText(e.target.value)}
-          />
+          <div className="card-edit">
+            <input
+              value={text}
+              autoFocus
+              onChange={(e) => setText(e.target.value)}
+            />
+
+            <div className="card-edit-actions">
+              <button
+                onClick={() => {
+                  if (!text.trim()) return;
+                  renameCard(sourceCol, item.id, text);
+                  setEditing(false);
+                }}
+              >
+                Save
+              </button>
+
+              <button
+                className="cancel"
+                onClick={() => {
+                  setText(item.content);
+                  setEditing(false);
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         ) : (
           <>
             <p className="card-content">{item.content}</p>
-
-            {/* DATE (DUE DATE FIRST, JIRA STYLE) */}
-            <span className={`card-date ${isOverdue ? "overdue" : ""}`}>
-              <SlCalender />
-              {showDate &&
-                new Date(showDate).toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                })}
-            </span>
           </>
         )}
 

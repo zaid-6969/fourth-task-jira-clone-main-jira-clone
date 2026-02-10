@@ -25,17 +25,17 @@ import { setColumns } from "../store/kanbanSlice";
 import "../styles/issuePage.scss";
 
 const IssuePage = () => {
-  /* ================= ROUTE ================= */
   const { projectId, issueId } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  /* ================= LOAD KANBAN BOARD (STATUS ONLY) ================= */
+  /* ================= BOARD (FOR STATUS OPTIONS) ================= */
+  const columns = useSelector((state) => state.kanban.columns);
+
   useEffect(() => {
     if (!projectId) return;
 
     const ref = doc(db, "projects", projectId, "kanban", "board");
-
     const unsub = onSnapshot(ref, (snap) => {
       if (snap.exists()) {
         dispatch(setColumns(snap.data().columns || []));
@@ -45,13 +45,33 @@ const IssuePage = () => {
     return () => unsub();
   }, [projectId, dispatch]);
 
-  /* ================= REDUX ================= */
-  const columns = useSelector((state) => state.kanban.columns);
+  /* ================= TICKET (SOURCE OF TRUTH) ================= */
+  const [ticket, setTicket] = useState(null);
+  const [loadingTicket, setLoadingTicket] = useState(true);
 
-  const issue =
-    columns.flatMap((col) => col.items).find((i) => i.id === issueId) || null;
+  const [summaryHTML, setSummaryHTML] = useState("");
+  const [descriptionHTML, setDescriptionHTML] = useState("");
 
-  /* ================= QUILL ================= */
+  useEffect(() => {
+    if (!issueId) return;
+
+    const ref = doc(db, "tickets", issueId);
+    const unsub = onSnapshot(ref, (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        setTicket({ id: issueId, ...data });
+        setSummaryHTML(data.summary || "");
+        setDescriptionHTML(data.description || "");
+      } else {
+        setTicket(null);
+      }
+      setLoadingTicket(false);
+    });
+
+    return () => unsub();
+  }, [issueId]);
+
+  /* ================= QUILL (MUST ALWAYS RUN) ================= */
   const summaryRef = useRef(null);
   const descriptionRef = useRef(null);
   const summaryQuill = useRef(null);
@@ -60,130 +80,169 @@ const IssuePage = () => {
   const [editSummary, setEditSummary] = useState(false);
   const [editDescription, setEditDescription] = useState(false);
 
-  const [summaryHTML, setSummaryHTML] = useState("");
-  const [descriptionHTML, setDescriptionHTML] = useState("");
-
-  const [activeActivityTab, setActiveActivityTab] = useState("Comments");
+  /* ================= ACTIVITY STATE (MUST BE BEFORE RETURNS) ================= */
+  const [activeActivityTab, setActiveActivityTab] = useState("All");
   const [activityOpen, setActivityOpen] = useState(true);
 
-  /* ================= LOAD TICKET CONTENT ================= */
   useEffect(() => {
-    if (!issueId) return;
-
-    const ref = doc(db, "tickets", issueId);
-
-    const unsub = onSnapshot(ref, (snap) => {
-      if (snap.exists()) {
-        const data = snap.data();
-        setSummaryHTML(data.summary || "");
-        setDescriptionHTML(data.description || "");
-      }
-    });
-
-    return () => unsub();
-  }, [issueId]);
-
-  /* ================= ISSUE NOT FOUND ================= */
-  if (!issue) {
-    return <div style={{ padding: 20 }}>Issue not found</div>;
-  }
-
-  /* ================= ACTIVITY ================= */
-  const logMoveActivity = async (from, to) => {
-    await addDoc(collection(db, "tickets", issue.id, "activity"), {
-      type: "move",
-      from,
-      to,
-      createdAt: serverTimestamp(),
-    });
-  };
-
-  /* ================= STATUS UPDATE (BOARD ONLY) ================= */
-  const updateStatus = async (columnId) => {
-    const updated = structuredClone(columns);
-
-    let sourceCol = null;
-    let index = -1;
-
-    for (const col of updated) {
-      index = col.items.findIndex((c) => c.id === issue.id);
-      if (index !== -1) {
-        sourceCol = col;
-        break;
-      }
-    }
-
-    if (!sourceCol) return;
-
-    const card = sourceCol.items[index];
-    const target = updated.find((c) => c.id === columnId);
-    if (!target) return;
-
-    sourceCol.items.splice(index, 1);
-
-    target.items.push({
-      ...card,
-      columnId: target.id,
-      columnTitle: target.title,
-    });
-
-    await updateDoc(doc(db, "projects", projectId, "kanban", "board"), {
-      columns: updated,
-    });
-
-    if (sourceCol.title !== target.title) {
-      await logMoveActivity(sourceCol.title, target.title);
-    }
-  };
-
-  /* ================= SAVE CONTENT ================= */
-  const saveSummary = async () => {
-    await updateDoc(doc(db, "tickets", issue.id), {
-      summary: summaryQuill.current.root.innerHTML,
-      updatedAt: new Date().toISOString(),
-    });
-
-    setEditSummary(false);
-    summaryQuill.current = null;
-  };
-
-  const saveDescription = async () => {
-    await updateDoc(doc(db, "tickets", issue.id), {
-      description: descriptionQuill.current.root.innerHTML,
-      updatedAt: new Date().toISOString(),
-    });
-
-    setEditDescription(false);
-    descriptionQuill.current = null;
-  };
-
-  /* ================= INIT QUILL ================= */
-  useEffect(() => {
-    if (editSummary && !summaryQuill.current) {
+    if (editSummary && summaryRef.current && !summaryQuill.current) {
       summaryQuill.current = new Quill(summaryRef.current, {
         theme: "snow",
         placeholder: "Add a summary…",
       });
       summaryQuill.current.root.innerHTML = summaryHTML;
     }
+  }, [editSummary, summaryHTML]);
 
-    if (editDescription && !descriptionQuill.current) {
+  useEffect(() => {
+    if (editDescription && descriptionRef.current && !descriptionQuill.current) {
       descriptionQuill.current = new Quill(descriptionRef.current, {
         theme: "snow",
         placeholder: "Add a description…",
       });
       descriptionQuill.current.root.innerHTML = descriptionHTML;
     }
-  }, [editSummary, editDescription, summaryHTML, descriptionHTML]);
+  }, [editDescription, descriptionHTML]);
+
+  /* ================= SAFE RETURNS (AFTER ALL HOOKS) ================= */
+  if (loadingTicket) {
+    return <div style={{ padding: 20 }}>Loading issue…</div>;
+  }
+
+  if (!ticket) {
+    return <div style={{ padding: 20 }}>Issue not found</div>;
+  }
+
+  /* ================= SAVE SUMMARY ================= */
+  const saveSummary = async () => {
+    if (!summaryQuill.current) return;
+
+    const html = summaryQuill.current.getSemanticHTML();
+
+    setEditSummary(false);
+    summaryQuill.current = null;
+    setSummaryHTML(html);
+
+    // 1️⃣ Update ticket (source of truth)
+    await updateDoc(doc(db, "tickets", ticket.id), {
+      summary: html,
+      updatedAt: new Date().toISOString(),
+    });
+
+    // 2️⃣ Update board
+    const updated = structuredClone(columns);
+
+    for (const col of updated) {
+      const i = col.items.findIndex((c) => c.id === ticket.id);
+      if (i !== -1) {
+        col.items[i].summary = html;
+        break;
+      }
+    }
+
+    dispatch(setColumns(updated));
+
+    await updateDoc(doc(db, "projects", projectId, "kanban", "board"), {
+      columns: updated,
+    });
+  };
+
+  /* ================= SAVE DESCRIPTION ================= */
+  const saveDescription = async () => {
+    if (!descriptionQuill.current) return;
+
+    const html = descriptionQuill.current.getSemanticHTML();
+
+    setEditDescription(false);
+    descriptionQuill.current = null;
+    setDescriptionHTML(html);
+
+    // 1️⃣ Update ticket (source of truth)
+    await updateDoc(doc(db, "tickets", ticket.id), {
+      description: html,
+      updatedAt: new Date().toISOString(),
+    });
+
+    // 2️⃣ Update board
+    const updated = structuredClone(columns);
+
+    for (const col of updated) {
+      const i = col.items.findIndex((c) => c.id === ticket.id);
+      if (i !== -1) {
+        col.items[i].description = html;
+        break;
+      }
+    }
+
+    dispatch(setColumns(updated));
+
+    await updateDoc(doc(db, "projects", projectId, "kanban", "board"), {
+      columns: updated,
+    });
+  };
+
+  /* ================= STATUS UPDATE ================= */
+  const updateStatus = async (columnId) => {
+    if (columnId === ticket.columnId) return;
+
+    const targetCol = columns.find((c) => c.id === columnId);
+    if (!targetCol) return;
+
+    // 1️⃣ Update ticket (source of truth)
+    await updateDoc(doc(db, "tickets", ticket.id), {
+      columnId,
+      columnTitle: targetCol.title,
+      updatedAt: new Date().toISOString(),
+    });
+
+    // 2️⃣ Update board
+    const updated = structuredClone(columns);
+
+    // Remove from old column
+    for (const col of updated) {
+      const i = col.items.findIndex((c) => c.id === ticket.id);
+      if (i !== -1) {
+        col.items.splice(i, 1);
+        break;
+      }
+    }
+
+    // Add to new column
+    const target = updated.find((c) => c.id === columnId);
+    if (!target) return;
+
+    target.items.push({
+      ...ticket,
+      columnId,
+      columnTitle: target.title,
+    });
+
+    dispatch(setColumns(updated));
+
+    await updateDoc(doc(db, "projects", projectId, "kanban", "board"), {
+      columns: updated,
+    });
+
+    // 3️⃣ Log activity
+    await addDoc(collection(db, "tickets", ticket.id, "activity"), {
+      type: "move",
+      from: ticket.columnTitle,
+      to: target.title,
+      createdAt: serverTimestamp(),
+    });
+  };
 
   /* ================= UI ================= */
   return (
     <div className="issue-page">
       {/* HEADER */}
       <div className="issue-header">
-        <span className="issue-key">{issue.issueKey}</span>
-        <span className="issue-title">{issue.content}</span>
-        <button className="icon-btn" onClick={() => navigate(`/spaces/${projectId}`)}>
+        <span className="issue-key">{ticket.issueKey}</span>
+        <span className="issue-title">{ticket.content}</span>
+        <button
+          className="icon-btn"
+          onClick={() => navigate(`/spaces/${projectId}`)}
+        >
           <FiX />
         </button>
       </div>
@@ -209,7 +268,14 @@ const IssuePage = () => {
                 <div ref={summaryRef} className="issue-editor" />
                 <div className="inline-actions">
                   <button onClick={saveSummary}>Save</button>
-                  <button onClick={() => setEditSummary(false)}>Cancel</button>
+                  <button
+                    onClick={() => {
+                      setEditSummary(false);
+                      summaryQuill.current = null;
+                    }}
+                  >
+                    Cancel
+                  </button>
                 </div>
               </>
             )}
@@ -233,7 +299,12 @@ const IssuePage = () => {
                 <div ref={descriptionRef} className="issue-editor" />
                 <div className="inline-actions">
                   <button onClick={saveDescription}>Save</button>
-                  <button onClick={() => setEditDescription(false)}>
+                  <button
+                    onClick={() => {
+                      setEditDescription(false);
+                      descriptionQuill.current = null;
+                    }}
+                  >
                     Cancel
                   </button>
                 </div>
@@ -251,13 +322,13 @@ const IssuePage = () => {
           {activityOpen && (
             <>
               {activeActivityTab === "All" && (
-                <IssueAllActivity issueId={issue.id} />
+                <IssueAllActivity issueId={ticket.id} />
               )}
               {activeActivityTab === "Comments" && (
-                <IssueComments issueId={issue.id} />
+                <IssueComments issueId={ticket.id} />
               )}
               {activeActivityTab === "History" && (
-                <IssueActivity issueId={issue.id} />
+                <IssueActivity issueId={ticket.id} />
               )}
             </>
           )}
@@ -268,7 +339,7 @@ const IssuePage = () => {
           <div className="issue-meta">
             <label>Status</label>
             <select
-              value={issue.columnId}
+              value={ticket.columnId || ""}
               onChange={(e) => updateStatus(e.target.value)}
             >
               {columns.map((c) => (
@@ -281,14 +352,16 @@ const IssuePage = () => {
 
           <div className="issue-meta">
             <label>Created by</label>
-            <div>{issue.createdByName || "—"}</div>
+            <div className="issue-meta-value">
+              {ticket.createdByName || "Unknown"}
+            </div>
           </div>
 
           <div className="issue-meta">
             <label>Created</label>
-            <div>
-              {issue.createdAt
-                ? new Date(issue.createdAt).toLocaleDateString("en-US", {
+            <div className="issue-meta-value">
+              {ticket.createdAt
+                ? new Date(ticket.createdAt).toLocaleDateString("en-US", {
                     month: "short",
                     day: "2-digit",
                     year: "numeric",
@@ -296,6 +369,32 @@ const IssuePage = () => {
                 : "—"}
             </div>
           </div>
+
+          {ticket.startDate && (
+            <div className="issue-meta">
+              <label>Start date</label>
+              <div className="issue-meta-value">
+                {new Date(ticket.startDate).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "2-digit",
+                  year: "numeric",
+                })}
+              </div>
+            </div>
+          )}
+
+          {ticket.dueDate && (
+            <div className="issue-meta">
+              <label>Due date</label>
+              <div className="issue-meta-value">
+                {new Date(ticket.dueDate).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "2-digit",
+                  year: "numeric",
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

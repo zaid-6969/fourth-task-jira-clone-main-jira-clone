@@ -16,7 +16,6 @@ const ActivityTabs = ({ activeTab, onTabChange, onToggle }) => {
     <div className="activity-wrapper">
       <div className="activity-header" onClick={handleToggle}>
         <span>{open ? <IoIosArrowDown/>: <IoIosArrowForward/> } </span><span>Activity</span>
-        {/* <span className={`activity-arrow ${open ? "open" : ""}`}>▾</span> */}
       </div>
 
       {open && (
