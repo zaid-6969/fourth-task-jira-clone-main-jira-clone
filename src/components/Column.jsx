@@ -14,28 +14,23 @@ const Column = ({
   deleteColumn,
   updateIssue,
 }) => {
-  /* ===== CARD ADD ===== */
 
 
   const [showInput, setShowInput] = useState(false);
   const [cardText, setCardText] = useState("");
 
-  /* ===== COLUMN MENU ===== */
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
-  /* ===== RENAME STATE ===== */
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState(column.title);
 
   const items = column.items || [];
 
-  /* KEEP TITLE IN SYNC */
   useEffect(() => {
     setTitleDraft(column.title);
   }, [column.title]);
 
-  /* CLOSE MENU ON OUTSIDE CLICK */
   useEffect(() => {
     const handler = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
@@ -46,7 +41,6 @@ const Column = ({
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  /* COLUMN DROP */
   const handleColumnDrop = (e) => {
     e.preventDefault();
     const raw = e.dataTransfer.getData("application/column");
@@ -54,7 +48,6 @@ const Column = ({
     moveColumn(JSON.parse(raw).index, index);
   };
 
-  /* CARD DROP */
   const handleCardDrop = (e, toIndex) => {
     e.preventDefault();
     const raw = e.dataTransfer.getData("application/card");
@@ -64,7 +57,6 @@ const Column = ({
     moveCard(sourceCol, column.id, card, fromIndex, toIndex);
   };
 
-  /* SAVE COLUMN TITLE */
   const handleSaveTitle = () => {
     const trimmed = titleDraft.trim();
     if (trimmed && trimmed !== column.title) {
@@ -73,7 +65,6 @@ const Column = ({
     setEditingTitle(false);
   };
 
-  /* CANCEL RENAME */
   const handleCancelTitle = () => {
     setTitleDraft(column.title);
     setEditingTitle(false);
@@ -85,9 +76,7 @@ const Column = ({
       onDragOver={(e) => e.preventDefault()}
       onDrop={handleColumnDrop}
     >
-      {/* ================= BODY (SCROLL CONTAINER) ================= */}
       <div className="column-scroll">
-        {/* ================= HEADER (NOW STICKY) ================= */}
         <div className="column-header">
           {editingTitle ? (
             <div className="column-title-edit">
@@ -118,7 +107,6 @@ const Column = ({
             </div>
           )}
 
-          {/* THREE DOTS */}
           <div className="column-menu-wrapper" ref={menuRef}>
             <button
               className="column-menu-btn"
@@ -151,8 +139,7 @@ const Column = ({
             )}
           </div>
         </div>
-
-        {/* ================= CARDS ================= */}
+        
         {items.map((item, i) => (
           <div
             key={item.id}

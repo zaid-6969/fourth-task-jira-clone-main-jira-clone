@@ -16,17 +16,17 @@ import { MdKeyboardDoubleArrowUp, MdKeyboardDoubleArrowDown } from "react-icons/
 import { FaEquals } from "react-icons/fa";
 
 /* IMAGE UPLOAD */
-export const uploadImageToFirebase = async (file) => {
-  if (!file) return null;
-  try {
-    const imageRef = ref(storage, `issues/${Date.now()}-${file.name}`);
-    await uploadBytes(imageRef, file);
-    return await getDownloadURL(imageRef);
-  } catch (err) {
-    console.error("Image upload failed:", err);
-    return null;
-  }
-};
+// export const uploadImageToFirebase = async (file) => {
+//   if (!file) return null;
+//   try {
+//     const imageRef = ref(storage, `issues/${Date.now()}-${file.name}`);
+//     await uploadBytes(imageRef, file);
+//     return await getDownloadURL(imageRef);
+//   } catch (err) {
+//     console.error("Image upload failed:", err);
+//     return null;
+//   }
+// };
 
 const Creationmodule = () => {
   const dispatch = useDispatch();
