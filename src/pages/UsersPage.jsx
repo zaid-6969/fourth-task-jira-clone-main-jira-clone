@@ -83,7 +83,6 @@ const UsersPage = () => {
 
   return (
     <>
-      {/* MODULE */}
       {showModule && (
         <div className="creation-module">
           <Creationmodule />
@@ -91,7 +90,6 @@ const UsersPage = () => {
         </div>
       )}
 
-      {/* 🔥 HIDE DASHBOARD WHEN INSIDE SPACE */}
       {!isInSpace && (
         <div style={{marginTop:'20px'}} className="landing-container">
           <div style={{width:'90%'}} className="landing">
@@ -104,8 +102,6 @@ const UsersPage = () => {
                   <p>Recent spaces</p>
                   <p style={{ color: "#669df1" }}>View all spaces</p>
                 </div>
-
-                {/* PROJECT CARDS */}
                 <div className="card-container">
                   {projects.length === 0 && (
                     <p>No projects assigned to you</p>
@@ -124,7 +120,6 @@ const UsersPage = () => {
 
               <div className="home-tabination">
                 <Tabination style={{ height: "45vh" }} tabs={tabs} />
-                {/* <TextEditor  value={summary} onChange={setSummary}  /> */}
               </div>
             </div>
           </div>

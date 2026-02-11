@@ -4,26 +4,15 @@ import "../styles/WorkTable.scss";
 import { FaCheck } from "react-icons/fa6";
 
 const ProjectWorkTable = ({ variant = "space" }) => {
-  /* ============================================================
-     GET DATA FROM REDUX
-  ============================================================ */
 
   const columns = useSelector((state) => state.kanban.columns);
 
-  // 👇 CHANGE THIS IF YOUR SPACE SLICE NAME IS DIFFERENT
   const spaceName = useSelector(
     (state) => state.space?.currentSpace?.name
   );
 
-  /* ============================================================
-     FLATTEN ALL TASKS
-  ============================================================ */
-
   const allTasks = columns.flatMap((col) => col.items);
 
-  /* ============================================================
-     GENERATE GLOBAL ISSUE KEY (DEV-1, DEV-2...)
-  ============================================================ */
 
   const tasks = allTasks.map((item, index) => ({
     ...item,
@@ -51,9 +40,6 @@ const ProjectWorkTable = ({ variant = "space" }) => {
 
 export default ProjectWorkTable;
 
-/* ============================================================
-   🚀 SPACE TABLE (JIRA STYLE)
-============================================================ */
 
 const SpaceTable = ({ tasks }) => {
   return (
@@ -112,10 +98,6 @@ const SpaceTable = ({ tasks }) => {
     </table>
   );
 };
-
-/* ============================================================
-   👤 USER PAGE LIST (ACTIVITY STYLE)
-============================================================ */
 
 const UserList = ({ tasks, spaceName }) => {
   return (

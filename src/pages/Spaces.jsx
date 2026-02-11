@@ -88,7 +88,6 @@ const Spaces = () => {
           </div>
         </div>
 
-        {/* 🔥 Board tab opens by default */}
         <Tabination tabs={tabs} defaultActiveTab="Board" />
       </div>
     </div>

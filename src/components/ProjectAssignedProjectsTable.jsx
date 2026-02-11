@@ -21,7 +21,6 @@ const ProjectAssignmentTable = ({ mode }) => {
   const auth = getAuth();
   const user = auth.currentUser;
 
-  /*  LOAD PROJECTS */
   useEffect(() => {
     if (!user) return;
 
@@ -44,7 +43,6 @@ const ProjectAssignmentTable = ({ mode }) => {
     loadProjects();
   }, [mode, user]);
 
-  /*  LOAD STARRED */
   useEffect(() => {
     if (!user) return;
 
@@ -61,7 +59,6 @@ const ProjectAssignmentTable = ({ mode }) => {
     loadStarred();
   }, [user]);
 
-  /*  TOGGLE STAR */
   const toggleStar = async (projectId) => {
     const existing = starred.find((s) => s.projectId === projectId);
 
@@ -104,7 +101,7 @@ const ProjectAssignmentTable = ({ mode }) => {
         <tbody>
           {projects.map((p) => (
             <tr key={p.id}>
-              {/*  STAR COLUMN (NO LAYOUT CHANGE) */}
+           
               <td
                 className="star-cell"
                 onClick={() => toggleStar(p.id)}

@@ -1,17 +1,9 @@
 @import "_colors";
 
-/* ===================================================
-   BASE
-===================================================*/
-
 .worktable-container {
   width: 100%;
   overflow-x: auto;
 }
-
-/* ===================================================
-🚀 SPACE TABLE STYLE
-===================================================*/
 
 .worktable-container.space {
   margin-top: 16px;
@@ -64,7 +56,6 @@
   color: var(--text);
 }
 
-/* Priority */
 
 .priority {
   padding: 3px 8px;
@@ -77,8 +68,6 @@
   background: rgba(255, 170, 0, 0.15);
   color: #ffb020;
 }
-
-/* Status */
 
 .status {
   padding: 3px 8px;
@@ -101,10 +90,6 @@
   background: rgba(80, 200, 120, 0.15);
   color: #50c878;
 }
-
-/* ===================================================
-   👤 USER LIST STYLE
-===================================================*/
 
 .worktable-container.user {
   background: var(--bg);
@@ -149,8 +134,6 @@
   font-size: 12px;
   color: var(--muted);
 }
-
-/* Checkbox */
 
 input[type="checkbox"] {
   width: 16px;
