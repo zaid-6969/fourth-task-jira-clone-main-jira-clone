@@ -56,7 +56,7 @@ const UsersPage = () => {
         role === "admin" ? (
           <ProjectAssignmentTable mode="admin" />
         ) : (
-          <ProjectAssignmentTable mode="user" />
+          <ProjectWorkTable variant="user" />
         ),
     },
     {

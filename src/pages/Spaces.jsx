@@ -49,7 +49,7 @@ const Spaces = () => {
       id: "List",
       label: "List",
       icon: <LiaThListSolid />,
-      content: <ProjectWorkTable projectId={projectId} />,
+      content: <ProjectWorkTable variant="space" projectId={projectId} />,
     },
     {
       id: "Board",

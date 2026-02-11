@@ -92,14 +92,14 @@ const ProjectAssignmentTable = ({ mode }) => {
   return (
     <div className="worktable-container">
       <table className="worktable">
-        <thead>
+        {/* <thead>
           <tr>
             <th></th>
             <th>Project</th>
             <th>{mode === "admin" ? "Assigned To" : "Assigned By"}</th>
             <th>Submitted</th>
           </tr>
-        </thead>
+        </thead> */}
 
         <tbody>
           {projects.map((p) => (
