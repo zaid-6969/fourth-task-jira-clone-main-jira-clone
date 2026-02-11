@@ -67,7 +67,8 @@ const UsersPage = () => {
     {
       id: "Assigned to me",
       label: "Assigned to me",
-      content: <WorkedOnTable />,
+      // content: <WorkedOnTable />,
+      content: <ProjectAssignmentTable />,
     },
     {
       id: "Starred",

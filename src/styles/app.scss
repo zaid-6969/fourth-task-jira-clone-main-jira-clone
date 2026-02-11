@@ -1197,7 +1197,7 @@ button.danger {
 .activity-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 10px;
   font-size: 14px;
   font-weight: 600;
   color: var(--text);
