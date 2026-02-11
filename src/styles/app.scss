@@ -469,7 +469,8 @@ button {
     height: 100px;
     overflow: scroll;
     border: 1px solid #393939;
-    background-color: #1d1f23;
+    background-color: var(--border);
+    color: var(--text);
   }
 }
 
@@ -980,7 +981,7 @@ button.danger {
   position: absolute;
   top: 24px;
   right: 0;
-  background: #ffffff;
+  background: var(--bg);
   border-radius: 6px;
   box-shadow: 0 8px 16px rgba(9, 30, 66, 0.25);
   width: 140px;
@@ -995,10 +996,10 @@ button.danger {
     border: none;
     text-align: left;
     cursor: pointer;
-    color: #172b4d;
+    color: var(--text);
 
     &:hover {
-      background: #f4f5f7;
+      background: var(--border);
     }
 
     &.danger {
@@ -1029,21 +1030,28 @@ button.danger {
 
   input {
     flex: 1;
-    padding: 4px 6px;
+    padding: 6px 8px;
     font-size: 14px;
+    width: 110px;
+    border-radius: 3px;
+    border: none;
   }
 
   .save {
     background: #0052cc;
     color: white;
+    border-radius: 3px;
     border: none;
-    padding: 4px 8px;
+    padding: 6px 8px;
   }
 
   .cancel {
     background: transparent;
     border: none;
-    color: #6b778c;
+    border-radius: 3px;
+    color: var(--text);
+    background-color: var(--border);
+    padding: 6px 8px;
   }
 }
 

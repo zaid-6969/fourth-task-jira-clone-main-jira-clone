@@ -14,6 +14,7 @@ import { getAuth } from "firebase/auth";
 import { FiMoreVertical } from "react-icons/fi";
 import { db } from "../firebase/firebase";
 import TextEditor from "./TextEditor";
+import style from '../styles/btn.module.scss'
 
 const IssueComments = ({ issueId }) => {
   const [editorValue, setEditorValue] = useState("");
@@ -144,7 +145,7 @@ const IssueComments = ({ issueId }) => {
                         Save
                       </button>
                       <button
-                        className="cancel"
+
                         onClick={() => setEditingId(null)}
                       >
                         Cancel
@@ -172,7 +173,7 @@ const IssueComments = ({ issueId }) => {
           onChange={setEditorValue}
         />
         <div className="comment-actions">
-          <button onClick={handleAddComment}>
+          <button className={style["create-btn"]} onClick={handleAddComment}>
             Add comment
           </button>
         </div>

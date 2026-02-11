@@ -267,7 +267,7 @@ const IssuePage = () => {
               <>
                 <div ref={summaryRef} className="issue-editor" />
                 <div className="inline-actions">
-                  <button onClick={saveSummary}>Save</button>
+                  <button  onClick={saveSummary}>Save</button>
                   <button
                     onClick={() => {
                       setEditSummary(false);

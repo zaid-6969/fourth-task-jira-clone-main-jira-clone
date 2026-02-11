@@ -64,7 +64,7 @@ const SpaceTable = ({ tasks }) => {
               <input type="checkbox" />
             </td>
 
-            <td className="work-cell">
+            <td style={{padding:'16px'}} className="work-cell">
               <span className="task-key">{task.issueKey}</span>
               <span className="task-title">{task.content}</span>
             </td>
