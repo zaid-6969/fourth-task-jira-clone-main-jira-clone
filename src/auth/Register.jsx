@@ -1,8 +1,5 @@
 import { useState } from "react";
-import {
-  createUserWithEmailAndPassword,
-  signInWithPopup,
-} from "firebase/auth";
+import { createUserWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import { auth, db, googleProvider } from "../firebase/firebase";
 import { useNavigate } from "react-router-dom";
 import { doc, setDoc, getDoc } from "firebase/firestore";
@@ -83,17 +80,16 @@ const Register = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
-
-            <button onClick={handleRegister}>Create account</button>
           </div>
-
-          <button
-            onClick={handleGoogleRegister}
-            className={styles.googleBtn}
-          >
-            <FcGoogle className={styles.googleIcon} />
-            Continue with Google
-          </button>
+          <div className={styles.groupbtn}>
+            <button className={styles.rigisterBtn} onClick={handleRegister}>
+              Create account
+            </button>
+            <button onClick={handleGoogleRegister} className={styles.googleBtn}>
+              <FcGoogle className={styles.googleIcon} />
+              Continue with Google
+            </button>
+          </div>
         </div>
 
         {/* RIGHT – IMAGE */}

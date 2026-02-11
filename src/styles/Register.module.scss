@@ -3,7 +3,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background:#00000057;
+  background: #00000057;
 }
 
 .registerContainer {
@@ -50,6 +50,8 @@
     border-radius: 6px;
     border: 1px solid #dfe1e6;
     outline: none;
+    background-color: var(--border);
+    color: var(--text);
 
     &:focus {
       border-color: #0052cc;
@@ -57,20 +59,36 @@
     }
   }
 
-  button {
-    margin-top: 10px;
-    padding: 14px;
-    border-radius: 6px;
-    border: none;
-    background: #0052cc;
-    color: #ffffff;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
+}
 
-    &:hover {
-      background: #0747a6;
-    }
+.groupbtn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  height: 65px;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.rigisterBtn{
+  padding: 14px;
+  width: 40%;
+  border-radius: 6px;
+  border: none;
+  background: #0052cc;
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover {
+    background: #0747a6;
+  }
+
+  &:disabled {
+    background: #a5adba;
+    cursor: not-allowed;
   }
 }
 
@@ -78,7 +96,6 @@
    GOOGLE BUTTON
 ===================== */
 .googleBtn {
-  margin-top: 18px;
   padding: 12px;
   border-radius: 6px;
   border: 1px solid #dfe1e6;
@@ -122,18 +139,3 @@
 
   animation: slideImageFromRight 0.9s ease-out forwards;
 }
-
-// /* =====================
-//    IMAGE ANIMATION
-// ===================== */
-// @keyframes slideImageFromRight {
-//   0% {
-//     transform: translateX(80px);
-//     opacity: 0;
-//   }
-
-//   100% {
-//     transform: translateX(0);
-//     opacity: 1;
-//   }
-// }

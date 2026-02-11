@@ -9,7 +9,6 @@ import darkImage from "../assets/image/jira.login.jpg";
 import lightImage from "../assets/image/jira.login.light.png";
 import { useSelector } from "react-redux";
 
-
 const ADMIN_EMAIL = "admin@gmail.com";
 
 const Login = () => {
@@ -98,14 +97,16 @@ const Login = () => {
             />
 
             {error && <p className={styles.error}>{error}</p>}
-
-            <button type="submit">Login</button>
+            <div className={styles.groupbtn}>
+              <button className={styles.loginbtn} type="submit">
+                Login
+              </button>
+              <button onClick={handleGoogleLogin} className={styles.googleBtn}>
+                <FcGoogle className={styles.googleIcon} />
+                Continue with Google
+              </button>
+            </div>
           </form>
-
-          <button onClick={handleGoogleLogin} className={styles.googleBtn}>
-            <FcGoogle className={styles.googleIcon} />
-            Continue with Google
-          </button>
 
           <p className={styles.authFooter}>
             Do you have a google account?{" "}
