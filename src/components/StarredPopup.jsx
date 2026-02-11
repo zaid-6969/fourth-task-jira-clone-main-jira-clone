@@ -16,7 +16,6 @@ const StarredPopup = ({ onClose }) => {
       const user = getAuth().currentUser;
       if (!user) return;
 
-      // get starred project IDs
       const starSnap = await getDocs(
         query(collection(db, "starred"), where("userId", "==", user.uid))
       );
@@ -28,7 +27,6 @@ const StarredPopup = ({ onClose }) => {
         return;
       }
 
-      // get projects
       const projSnap = await getDocs(collection(db, "projects"));
       const list = projSnap.docs
         .map((d) => ({ id: d.id, ...d.data() }))

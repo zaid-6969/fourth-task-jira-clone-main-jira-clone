@@ -179,13 +179,13 @@ const Asidebar = () => {
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth <= 900) {
-        dispatch(hide()); // hide sidebar on small screens
+        dispatch(hide());
       } else {
-        dispatch(show()); // show sidebar on large screens
+        dispatch(show()); 
       }
     };
 
-    handleResize(); // run once when component mounts
+    handleResize();
 
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
