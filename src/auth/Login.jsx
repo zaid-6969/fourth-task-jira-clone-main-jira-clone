@@ -8,6 +8,7 @@ import { FcGoogle } from "react-icons/fc";
 import darkImage from "../assets/image/jira.login.jpg";
 import lightImage from "../assets/image/jira.login.light.png";
 import { useSelector } from "react-redux";
+import Image1 from "../assets/image/jira.jpg";
 
 const ADMIN_EMAIL = "admin@gmail.com";
 
@@ -62,16 +63,11 @@ const Login = () => {
 
   return (
     <div className={styles.loginPage}>
+      <div className={styles.title}>
+        <img className={styles.img} src={Image1} alt="" />
+        <h1>JIRA</h1>
+      </div>
       <div className={styles.loginContainer}>
-        {/* LEFT SIDE – IMAGE */}
-        <div className={styles.loginImageWrapper}>
-          <img
-            src={loginImage}
-            alt="Jira workflow illustration"
-            className={styles.loginImage}
-          />
-        </div>
-
         {/* RIGHT SIDE – CONTENT */}
         <div className={styles.loginLeft}>
           <h1>Welcome back</h1>
@@ -101,19 +97,19 @@ const Login = () => {
               <button className={styles.loginbtn} type="submit">
                 Login
               </button>
+              <p>OR</p>
               <button onClick={handleGoogleLogin} className={styles.googleBtn}>
                 <FcGoogle className={styles.googleIcon} />
                 Continue with Google
               </button>
             </div>
+            <p className={styles.authFooter}>
+              Do you have a google account?{" "}
+              <Link to="/register" className={styles.registerLink}>
+                Register
+              </Link>
+            </p>
           </form>
-
-          <p className={styles.authFooter}>
-            Do you have a google account?{" "}
-            <Link to="/register" className={styles.registerLink}>
-              Register
-            </Link>
-          </p>
         </div>
       </div>
     </div>

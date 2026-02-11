@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import styles from "../styles/Register.module.scss";
 import { FcGoogle } from "react-icons/fc";
-import imageJira from "../assets/image/register.jira.png";
+import Image1 from "../assets/image/jira.jpg";
 
 const ADMIN_EMAIL = "admin@gmail.com";
 
@@ -25,7 +25,7 @@ const Register = () => {
         role: res.user.email === ADMIN_EMAIL ? "admin" : "user",
         createdAt: Date.now(),
       });
-
+      
       navigate("/login");
     } catch (error) {
       alert(error.message);
@@ -55,12 +55,15 @@ const Register = () => {
 
   return (
     <div className={styles.registerPage}>
+      <div className={styles.title}>
+              <img className={styles.img} src={Image1} alt="" />
+              <h1>JIRA</h1>
+            </div>
       <div className={styles.registerContainer}>
-        {/* LEFT – CONTENT */}
         <div className={styles.registerLeft}>
-          <h1>Create account</h1>
+          <h1>Set up your Jira Account</h1>
           <p className={styles.subtitle}>
-            Register to start managing your projects
+            continue to Jira
           </p>
 
           <div className={styles.registerForm}>
@@ -80,11 +83,15 @@ const Register = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
+            <p className={styles.para}>By signing up, I accept the Jira <span className={styles.bluepara}>cloud Terms of Service </span>  and  acknowledge the <span className={styles.bluepara}>Privacy Policy</span>.</p>
           </div>
           <div className={styles.groupbtn}>
             <button className={styles.rigisterBtn} onClick={handleRegister}>
               Create account
             </button>
+                
+                <p>OR</p>
+
             <button onClick={handleGoogleRegister} className={styles.googleBtn}>
               <FcGoogle className={styles.googleIcon} />
               Continue with Google
@@ -92,14 +99,6 @@ const Register = () => {
           </div>
         </div>
 
-        {/* RIGHT – IMAGE */}
-        <div className={styles.registerImageWrapper}>
-          <img
-            src={imageJira}
-            alt="Register illustration"
-            className={styles.registerImage}
-          />
-        </div>
       </div>
     </div>
   );

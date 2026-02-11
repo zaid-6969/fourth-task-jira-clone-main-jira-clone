@@ -15,7 +15,8 @@ import { BsGrid1X2 } from "react-icons/bs";
 import { FaUserFriends } from "react-icons/fa";
 import { TbAdjustmentsFilled } from "react-icons/tb";
 import { BsThreeDots } from "react-icons/bs";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { hide, show } from "../store/uiSlice";
 
 import {
   collection,
@@ -29,8 +30,6 @@ import { getAuth } from "firebase/auth";
 import { db } from "../firebase/firebase";
 import style from "../styles/btn.module.scss";
 import StarredPopup from "../components/StarredPopup";
-
-/* ---------------- CREATE SPACE MODAL ---------------- */
 
 const CreateSpaceModal = ({ users, onClose }) => {
   const [name, setName] = useState("");
@@ -105,10 +104,11 @@ const CreateSpaceModal = ({ users, onClose }) => {
   );
 };
 
-/* ---------------- ASIDE BAR ---------------- */
-
 const Asidebar = () => {
   const showBox = useSelector((state) => state.ui.showBox);
+  const dispatch = useDispatch();
+
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -176,6 +176,21 @@ const Asidebar = () => {
     },
   ];
 
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth <= 900) {
+        dispatch(hide()); // hide sidebar on small screens
+      } else {
+        dispatch(show()); // show sidebar on large screens
+      }
+    };
+
+    handleResize(); // run once when component mounts
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [dispatch]);
+
   return (
     <>
       <div className={`aside-container ${showBox ? "open" : "collapsed"}`}>
@@ -196,7 +211,7 @@ const Asidebar = () => {
                       <div
                         className={style["aside-list-items-first"]}
                         onClick={(e) => {
-                          e.stopPropagation(); // 🔴 ADD THIS LINE
+                          e.stopPropagation();
                           setIsSpacesOpen((p) => !p);
                         }}
                       >
@@ -209,7 +224,6 @@ const Asidebar = () => {
                         <p>{item.label}</p>
                       </div>
 
-                      {/* actions must NOT toggle */}
                       <span className="end-icon space-actions">
                         <FiPlus
                           className="space-plus"
