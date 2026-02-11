@@ -37,7 +37,7 @@
 .subtitle {
   font-size: 18px;
   color: #6b778c;
-  margin-bottom: 60px;
+  margin-bottom: 20px;
 }
 
 .registerForm {
@@ -122,8 +122,8 @@
 }
 
 .title img{
-  height: 50px;
-  width: 50px;
+  height: 35px;
+  width: 35px;
   border-radius: 5px;
 }
 
@@ -133,8 +133,11 @@
   align-items: center;
   justify-content: center;
   gap: 15px;
-  margin-bottom: 25px;
+  margin-bottom: 10px;
   color: rgb(0 82 204);
+  h1{
+    font-size: 35px;
+  }
 }
 
 .para{

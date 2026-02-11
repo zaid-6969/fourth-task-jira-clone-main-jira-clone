@@ -1,12 +1,14 @@
 @import "_colors.scss";
 
 .loginPage {
-  min-height: 100vh;
+  min-height: auto;
+  height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   background: #00000057;
   flex-direction: column;
+  overflow: scroll;
 }
 
 .loginContainer {
@@ -36,7 +38,7 @@
 .subtitle {
   color: #6b778c;
   font-size: 15px;
-  margin-bottom: 65px;
+  margin-bottom: 25px;
 }
 
 .loginForm {
