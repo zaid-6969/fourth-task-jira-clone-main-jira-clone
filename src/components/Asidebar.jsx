@@ -51,12 +51,18 @@ const CreateSpaceModal = ({ users, onClose }) => {
   };
 
   const createSpace = async () => {
-    if (!name.trim()) return;
+    if (!name.trim() || !currentUser) return;
 
     await addDoc(collection(db, "projects"), {
       name,
       createdBy: currentUser.uid,
-      assignedUserIds: selectedUsers,
+
+      // ✅ NEW STRUCTURE
+      members: selectedUsers.map((uid) => ({
+        uid: uid,
+        role: uid === currentUser.uid ? "owner" : "member",
+      })),
+
       createdAt: serverTimestamp(),
     });
 
@@ -108,7 +114,6 @@ const Asidebar = () => {
   const showBox = useSelector((state) => state.ui.showBox);
   const dispatch = useDispatch();
 
-
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -148,10 +153,13 @@ const Asidebar = () => {
 
   useEffect(() => {
     if (!currentUser || !role) return;
+
     setFilteredProjects(
       role === "admin"
         ? projects
-        : projects.filter((p) => p.assignedUserIds?.includes(currentUser.uid)),
+        : projects.filter((p) =>
+            p.members?.some((member) => member.uid === currentUser.uid),
+          ),
     );
   }, [projects, role, currentUser]);
 
@@ -181,7 +189,7 @@ const Asidebar = () => {
       if (window.innerWidth <= 900) {
         dispatch(hide());
       } else {
-        dispatch(show()); 
+        dispatch(show());
       }
     };
 

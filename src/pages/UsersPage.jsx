@@ -25,28 +25,28 @@ const UsersPage = () => {
 
   const [projects, setProjects] = useState([]);
   const [summary, setSummary] = useState("");
+  const { user } = useAuth(); // 🔥 ADD THIS
+
   useEffect(() => {
     const fetchProjects = async () => {
-      const auth = getAuth();
-      const currentUser = auth.currentUser;
-      if (!currentUser) return;
+      if (!user) return;
 
-      const q = query(
-        collection(db, "projects"),
-        where("assignedUserIds", "array-contains", currentUser.uid)
-      );
+      const snapshot = await getDocs(collection(db, "projects"));
 
-      const snapshot = await getDocs(q);
-      const projectList = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+      const projectList = snapshot.docs
+        .map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }))
+        .filter((project) =>
+          project.members?.some((member) => member.uid === user.uid),
+        );
 
       setProjects(projectList);
     };
 
     fetchProjects();
-  }, []);
+  }, [user]);
 
   const tabs = [
     {
@@ -87,15 +87,14 @@ const UsersPage = () => {
       {showModule && (
         <div className="creation-module">
           <Creationmodule />
-
         </div>
       )}
 
       {!isInSpace && (
-        <div style={{marginTop:'20px'}} className="landing-container">
-          <div style={{width:'90%'}} className="landing">
+        <div style={{ marginTop: "20px" }} className="landing-container">
+          <div style={{ width: "90%" }} className="landing">
             <h2>For you</h2>
-            <div style={{margin:"15px 0px"}} className="hr"></div>
+            <div style={{ margin: "15px 0px" }} className="hr"></div>
 
             <div className="tabination-container">
               <div>
@@ -104,13 +103,10 @@ const UsersPage = () => {
                   <p style={{ color: "#669df1" }}>View all spaces</p>
                 </div>
                 <div className="card-container">
-                  {projects.length === 0 && (
-                    <p>No projects assigned to you</p>
-                  )}
-
                   {projects.map((project) => (
                     <SupportCard
                       key={project.id}
+                      space={project} // 🔥 MUST PASS THIS
                       onClick={() => navigate(`/spaces/${project.id}`)}
                     >
                       {project.name}

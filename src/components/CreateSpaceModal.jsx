@@ -3,7 +3,7 @@ import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import "../styles/CreateSpaceModal.scss";
 import { getAuth } from "firebase/auth";
 import { db } from "../firebase/firebase";
-import style from '../styles/btn.module.scss'
+import style from "../styles/btn.module.scss";
 const CreateSpaceModal = ({ users, onClose }) => {
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
@@ -15,7 +15,6 @@ const CreateSpaceModal = ({ users, onClose }) => {
   const currentUser = auth.currentUser;
 
   useEffect(() => {
-    // auto include creator
     if (currentUser) {
       setSelectedUsers([currentUser.uid]);
     }
@@ -27,17 +26,38 @@ const CreateSpaceModal = ({ users, onClose }) => {
     );
   };
 
+  // const handleCreate = async () => {
+  //   if (!name.trim()) return;
+
+  //   await addDoc(collection(db, "projects"), {
+  //     name,
+  //     description: desc,
+  //     createdBy: currentUser.uid,
+  //     assignedUserIds: selectedUsers,
+  //     createdAt: serverTimestamp(),
+  //   });
+
+  //   onClose();
+  // };
   const handleCreate = async () => {
-    if (!name.trim()) return;
+    if (!name.trim() || !currentUser) return;
+
+    console.log("NEW CREATE FUNCTION RUNNING");
 
     await addDoc(collection(db, "projects"), {
       name,
       description: desc,
       createdBy: currentUser.uid,
-      assignedUserIds: selectedUsers,
+
+      members: selectedUsers.map((uid) => ({
+        uid: uid,
+        role: uid === currentUser.uid ? "owner" : "member",
+      })),
+
       createdAt: serverTimestamp(),
     });
 
+    console.log("NEW CREATE FUNCTION RUNNING");
     onClose();
   };
 
@@ -70,24 +90,24 @@ const CreateSpaceModal = ({ users, onClose }) => {
           Add members
         </button>
         {/* <div className={style.scrollUsers}> */}
-          {showUsers && (
-            <div className={style.scrollUsers}>
-              {users.map((u) => (
-                <div
-                  key={u.id}
-                  className={`user-item ${
-                    selectedUsers.includes(u.id) ? "selected" : ""
-                  }`}
-                  onClick={() => toggleUser(u.id)}
-                >
-                  <span className="avatar">
-                    {u.name?.charAt(0).toUpperCase()}
-                  </span>
-                  <span>{u.name}</span>
-                </div>
-              ))}
-            </div>
-          )}
+        {showUsers && (
+          <div className={style.scrollUsers}>
+            {users.map((u) => (
+              <div
+                key={u.id}
+                className={`user-item ${
+                  selectedUsers.includes(u.id) ? "selected" : ""
+                }`}
+                onClick={() => toggleUser(u.id)}
+              >
+                <span className="avatar">
+                  {u.name?.charAt(0).toUpperCase()}
+                </span>
+                <span>{u.name}</span>
+              </div>
+            ))}
+          </div>
+        )}
         {/* </div> */}
         <div className="modal-actions">
           <button className="cancel" onClick={onClose}>
