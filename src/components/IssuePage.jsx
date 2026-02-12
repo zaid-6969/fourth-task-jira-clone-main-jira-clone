@@ -53,16 +53,22 @@ const IssuePage = () => {
   const [descriptionHTML, setDescriptionHTML] = useState("");
 
   useEffect(() => {
-    if (!issueId) return;
+    if (!issueId) {
+      console.log("⚠️ No issueId provided");
+      return;
+    }
 
+    console.log("🔍 Loading ticket:", issueId);
     const ref = doc(db, "tickets", issueId);
     const unsub = onSnapshot(ref, (snap) => {
       if (snap.exists()) {
         const data = snap.data();
+        console.log("✅ Ticket found:", data);
         setTicket({ id: issueId, ...data });
         setSummaryHTML(data.summary || "");
         setDescriptionHTML(data.description || "");
       } else {
+        console.log("❌ Ticket not found in database:", issueId);
         setTicket(null);
       }
       setLoadingTicket(false);
@@ -267,7 +273,7 @@ const IssuePage = () => {
               <>
                 <div ref={summaryRef} className="issue-editor" />
                 <div className="inline-actions">
-                  <button  onClick={saveSummary}>Save</button>
+                  <button onClick={saveSummary}>Save</button>
                   <button
                     onClick={() => {
                       setEditSummary(false);

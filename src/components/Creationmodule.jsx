@@ -4,29 +4,15 @@ import { useDispatch } from "react-redux";
 import { toggleModule } from "../store/module";
 import "../styles/creationModule.scss";
 
-import { collection, getDocs, doc, getDoc, setDoc } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, setDoc, addDoc, updateDoc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
-import { db, storage } from "../firebase/firebase";
+import { db } from "../firebase/firebase";
 
 import style from "../styles/btn.module.scss";
 import TextEditor from "./TextEditor";
 
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { MdKeyboardDoubleArrowUp, MdKeyboardDoubleArrowDown } from "react-icons/md";
 import { FaEquals } from "react-icons/fa";
-
-/* IMAGE UPLOAD */
-// export const uploadImageToFirebase = async (file) => {
-//   if (!file) return null;
-//   try {
-//     const imageRef = ref(storage, `issues/${Date.now()}-${file.name}`);
-//     await uploadBytes(imageRef, file);
-//     return await getDownloadURL(imageRef);
-//   } catch (err) {
-//     console.error("Image upload failed:", err);
-//     return null;
-//   }
-// };
 
 const Creationmodule = () => {
   const dispatch = useDispatch();
@@ -48,7 +34,6 @@ const Creationmodule = () => {
   const [startDate, setStartDate] = useState("");
   const [priority, setPriority] = useState("medium");
 
-  const [imageFile, setImageFile] = useState(null);
   const [loading, setLoading] = useState(false);
 
   /* LOAD PROJECTS */
@@ -84,24 +69,47 @@ const Creationmodule = () => {
     setLoading(true);
 
     try {
-      const boardRef = doc(
-        db,
-        "projects",
-        selectedProject.id,
-        "kanban",
-        "board"
-      );
+      // 1️⃣ Get current board to find issue number
+      const boardRef = doc(db, "projects", selectedProject.id, "kanban", "board");
+      const boardSnap = await getDoc(boardRef);
+      if (!boardSnap.exists()) return;
 
-      const snap = await getDoc(boardRef);
-      if (!snap.exists()) return;
+      const board = boardSnap.data();
+      
+      // Find max issue number
+      let maxIssueNumber = 0;
+      board.columns.forEach((col) => {
+        col.items?.forEach((item) => {
+          if (item.issueNumber && item.issueNumber > maxIssueNumber) {
+            maxIssueNumber = item.issueNumber;
+          }
+        });
+      });
+      
+      const nextNumber = maxIssueNumber + 1;
+      const issueKey = `${selectedProject.name}-${nextNumber}`;
 
-      let imageUrl = null;
-      if (imageFile) {
-        imageUrl = await uploadImageToFirebase(imageFile);
-      }
+      // 2️⃣ Create ticket document in tickets collection (SOURCE OF TRUTH)
+      const ticketRef = await addDoc(collection(db, "tickets"), {
+        issueNumber: nextNumber,
+        issueKey,
+        content: title,
+        projectId: selectedProject.id,  // ✅ CRITICAL
+        columnId: selectedColumn.id,
+        columnTitle: selectedColumn.title,
+        summary,  // ✅ NOW SAVED
+        description,  // ✅ NOW SAVED
+        dueDate,  // ✅ NOW SAVED
+        startDate,  // ✅ NOW SAVED
+        priority,  // ✅ NOW SAVED
+        createdBy: user?.uid || "",
+        createdByName: user?.displayName || user?.email || "",
+        createdAt: new Date().toISOString(),
+      });
 
-      const board = snap.data();
+      console.log("✅ Created ticket:", ticketRef.id, "with all data");
 
+      // 3️⃣ Update board with new item
       const updatedColumns = board.columns.map((col) =>
         col.id === selectedColumn.id
           ? {
@@ -109,14 +117,16 @@ const Creationmodule = () => {
               items: [
                 ...(col.items || []),
                 {
-                  id: Date.now().toString(),
+                  id: ticketRef.id,  // Use ticket document ID
+                  issueNumber: nextNumber,
+                  issueKey,
                   content: title,
+                  projectId: selectedProject.id,  // ✅ CRITICAL FOR MODAL REDIRECT
                   summary,
                   description,
                   dueDate,
                   startDate,
                   priority,
-                  imageUrl,
                   columnId: col.id,
                   columnTitle: col.title,
                   createdBy: user?.uid || "",
@@ -128,17 +138,16 @@ const Creationmodule = () => {
           : col
       );
 
-      await setDoc(boardRef, { columns: updatedColumns }, { merge: true });
+      await updateDoc(boardRef, { columns: updatedColumns });
 
-      // RESET
+      // RESET FORM
       setTitle("");
       setSummary("");
       setDescription("");
       setDueDate("");
-      setPriority("medium");
-      setImageFile(null);
-      setSelectedColumn(columns[0] || null);
       setStartDate("");
+      setPriority("medium");
+      setSelectedColumn(columns[0] || null);
       dispatch(toggleModule());
     } catch (err) {
       console.error("CREATE TICKET FAILED:", err);
@@ -240,17 +249,20 @@ const Creationmodule = () => {
             <TextEditor value={description} onChange={setDescription} />
           </div>
 
-          <div className="form-group" style={{ width: "25%" }}>
+          <div className="form-group" style={{ width: "48%" }}>
+            <label>Start date</label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}  // ✅ FIXED TYPO
+            />
+          </div>
+
+          <div className="form-group" style={{ width: "48%" }}>
             <label>Due date</label>
             <input
               type="date"
               value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-            />
-             <label>start date</label>
-            <input
-              type="date"
-              value={startDate}
               onChange={(e) => setDueDate(e.target.value)}
             />
           </div>

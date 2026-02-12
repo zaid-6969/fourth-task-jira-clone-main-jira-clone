@@ -18,7 +18,7 @@ const SupportCard = ({
             <div className="card-left">
               <div className="icon">🎫</div>
               <div>
-                <div className="title">{children}</div>
+                <div className="title"><h3>{children}</h3></div>
                 <p className="subtitle">Service management</p>
               </div>
             </div>

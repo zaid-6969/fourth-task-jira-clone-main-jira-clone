@@ -42,7 +42,7 @@ const Kanban = ({ projectId, projectName }) => {
 
   if (loading) return null;
 
-      // refresh
+  // refresh
   useEffect(() => {
     dispatch(setColumns([]));
     loaded.current = false;
@@ -64,7 +64,6 @@ const Kanban = ({ projectId, projectName }) => {
   }, [projectId]);
 
   // load 
-
   useEffect(() => {
     if (!projectId) return;
 
@@ -92,15 +91,15 @@ const Kanban = ({ projectId, projectName }) => {
     return () => unsub();
   }, [projectId, dispatch]);
 
-
   const addCard = async (columnId, content) => {
     const nextNumber = issueCounter + 1;
 
+    // 1️⃣ Create ticket document FIRST with ALL data including projectId
     const ticketRef = await addDoc(collection(db, "tickets"), {
       issueNumber: nextNumber,
       issueKey: `${projectName}-${nextNumber}`,
       content,
-      projectId,
+      projectId,  // ✅ CRITICAL - needed for navigation
       columnId,
       columnTitle: columns.find((c) => c.id === columnId)?.title || "",
       summary: "",
@@ -110,6 +109,9 @@ const Kanban = ({ projectId, projectName }) => {
       createdAt: new Date().toISOString(),
     });
 
+    console.log("✅ Created ticket:", ticketRef.id, "with projectId:", projectId);
+
+    // 2️⃣ Create board item with same data INCLUDING projectId
     const updated = columns.map((col) =>
       col.id === columnId
         ? {
@@ -121,6 +123,7 @@ const Kanban = ({ projectId, projectName }) => {
                 issueNumber: nextNumber,
                 issueKey: `${projectName}-${nextNumber}`,
                 content,
+                projectId,  // ✅ ADD THIS - needed for modal redirect
                 summary: "",
                 description: "",
                 columnId,
@@ -133,8 +136,10 @@ const Kanban = ({ projectId, projectName }) => {
         : col,
     );
 
+    // 3️⃣ Update Redux
     dispatch(setColumns(updated));
 
+    // 4️⃣ Update board document
     await updateDoc(doc(db, "projects", projectId, "kanban", "board"), {
       columns: updated,
     });
@@ -289,9 +294,7 @@ const Kanban = ({ projectId, projectName }) => {
         userName: user.displayName || user.email,
         createdAt: serverTimestamp(),
       });
-    }
-
-    else {
+    } else {
       sourceCol.items[index] = {
         ...card,
         ...updatedItem,
@@ -330,7 +333,6 @@ const Kanban = ({ projectId, projectName }) => {
 
   return (
     <>
-    
       <div className="kanban-search">
         <input
           type="text"

@@ -11,17 +11,22 @@ const ProjectWorkTable = ({ variant = "space" }) => {
     (state) => state.space?.currentSpace?.name
   );
 
-  const allTasks = columns.flatMap((col) => col.items);
+  if (!columns || columns.length === 0) {
+    return <p style={{ padding: 16 }}>No tasks yet</p>;
+  }
 
+  /* ============================================
+     COLLECT ALL TASKS FROM KANBAN
+  ============================================ */
 
-  const tasks = allTasks.map((item, index) => ({
-    ...item,
-    columnTitle:
-      columns.find((col) =>
-        col.items.some((task) => task.id === item.id)
-      )?.title || "",
-    issueKey: item.issueKey || `DEV-${index + 1}`,
-  }));
+  const tasks = columns.flatMap((col, colIndex) =>
+    (col.items || []).map((item, index) => ({
+      ...item,
+      columnTitle: col.title,
+      issueKey: item.issueKey || `DEV-${colIndex + 1}${index + 1}`,
+      spaceName: spaceName || "Unknown Space",
+    }))
+  );
 
   if (tasks.length === 0) {
     return <p style={{ padding: 16 }}>No tasks yet</p>;
@@ -32,7 +37,7 @@ const ProjectWorkTable = ({ variant = "space" }) => {
       {variant === "space" ? (
         <SpaceTable tasks={tasks} />
       ) : (
-        <UserList tasks={tasks} spaceName={spaceName} />
+        <UserList tasks={tasks} />
       )}
     </div>
   );
@@ -40,6 +45,9 @@ const ProjectWorkTable = ({ variant = "space" }) => {
 
 export default ProjectWorkTable;
 
+/* =======================================================
+   ✅ SPACE TABLE (UNCHANGED)
+======================================================= */
 
 const SpaceTable = ({ tasks }) => {
   return (
@@ -64,7 +72,7 @@ const SpaceTable = ({ tasks }) => {
               <input type="checkbox" />
             </td>
 
-            <td style={{padding:'16px'}} className="work-cell">
+            <td style={{ padding: "16px" }} className="work-cell">
               <span className="task-key">{task.issueKey}</span>
               <span className="task-title">{task.content}</span>
             </td>
@@ -99,22 +107,33 @@ const SpaceTable = ({ tasks }) => {
   );
 };
 
-const UserList = ({ tasks, spaceName }) => {
+/* =======================================================
+   ✅ USER LIST (NOW GUARANTEED TO SHOW)
+======================================================= */
+
+const UserList = ({ tasks }) => {
   return (
     <div className="user-list">
       {tasks.map((task) => (
         <div key={task.id} className="user-list-item">
           <div className="left">
-            <span style={{width:'18px' , height :'18px'}} className="checkbox-box">
-              <FaCheck style={{fontSize:'16px'}} className="checkbox-icon" />
+            <span
+              style={{ width: "18px", height: "18px" }}
+              className="checkbox-box"
+            >
+              <FaCheck
+                style={{ fontSize: "16px" }}
+                className="checkbox-icon"
+              />
             </span>
 
             <div>
               <div className="title">{task.content}</div>
 
               <div className="meta">
-                <span>
-                  {task.issueKey} 
+                <span>{task.issueKey}</span>
+                <span style={{ marginLeft: "10px", opacity: 0.6 }}>
+                  {task.spaceName}
                 </span>
               </div>
             </div>

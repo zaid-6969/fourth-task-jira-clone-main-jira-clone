@@ -68,6 +68,8 @@ const KanbanCard = ({
         onDragStart={handleDragStart}
         onClick={() => {
           if (editing || menuOpen) return;
+          console.log("🔍 Opening modal with item:", item);
+          console.log("📌 Item has projectId?", item.projectId);
           setShowModal(true);
         }}
       >
@@ -215,6 +217,7 @@ const KanbanCard = ({
         <IssueModal
           item={item}
           projectName={projectName}
+          projectId={item.projectId}  // ✅ CRITICAL FIX - Pass projectId from item
           columns={columns}
           onClose={() => setShowModal(false)}
           onUpdate={updateIssue}

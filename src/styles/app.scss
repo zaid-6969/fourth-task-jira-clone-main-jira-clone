@@ -33,6 +33,12 @@ h2 {
   @include common();
 }
 
+h3{
+  font-size: clamp(1rem, 1vw, 2rem);
+  padding: 0px;
+  margin: 0px;
+}
+
 p {
   font-size: clamp(0.8rem, 1vw, 2.25rem);
   font-weight: 550;
