@@ -3,7 +3,7 @@ import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import "../styles/CreateSpaceModal.scss";
 import { getAuth } from "firebase/auth";
 import { db } from "../firebase/firebase";
-
+import style from '../styles/btn.module.scss'
 const CreateSpaceModal = ({ users, onClose }) => {
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
@@ -69,26 +69,26 @@ const CreateSpaceModal = ({ users, onClose }) => {
         >
           Add members
         </button>
-
-        {showUsers && (
-          <div className="user-list-dropdown">
-            {users.map((u) => (
-              <div
-                key={u.id}
-                className={`user-item ${
-                  selectedUsers.includes(u.id) ? "selected" : ""
-                }`}
-                onClick={() => toggleUser(u.id)}
-              >
-                <span className="avatar">
-                  {u.name?.charAt(0).toUpperCase()}
-                </span>
-                <span>{u.name}</span>
-              </div>
-            ))}
-          </div>
-        )}
-
+        {/* <div className={style.scrollUsers}> */}
+          {showUsers && (
+            <div className={style.scrollUsers}>
+              {users.map((u) => (
+                <div
+                  key={u.id}
+                  className={`user-item ${
+                    selectedUsers.includes(u.id) ? "selected" : ""
+                  }`}
+                  onClick={() => toggleUser(u.id)}
+                >
+                  <span className="avatar">
+                    {u.name?.charAt(0).toUpperCase()}
+                  </span>
+                  <span>{u.name}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        {/* </div> */}
         <div className="modal-actions">
           <button className="cancel" onClick={onClose}>
             Cancel
